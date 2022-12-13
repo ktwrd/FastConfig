@@ -40,19 +40,73 @@ namespace FastConfig
                 if (Attribute.GetCustomAttribute(field.FieldType, typeof(InnerAttribute)) != null)
                     ParseChildren(field.FieldType, field.GetValue(instance) ?? Activator.CreateInstance(field.FieldType), defaultGroup);
                 else
-                    field.SetValue(instance, GetConfigMemberValue(field, field.FieldType, defaultGroup, field.Name, field.GetValue(instance)));
+                    field.SetValue(instance, GetConfigMemberValue(field, field.FieldType, instance, defaultGroup, field.Name, field.GetValue(instance)));
             }
             foreach (var prop in type.GetProperties())
             {
                 if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(InnerAttribute)) != null)
                     ParseChildren(prop.PropertyType, prop.GetValue(instance) ?? Activator.CreateInstance(prop.PropertyType), defaultGroup);
                 else
-                    prop.SetValue(instance, GetConfigMemberValue(prop, prop.PropertyType, defaultGroup, prop.Name, prop.GetValue(instance)));
+                {
+                    prop.SetValue(instance, GetConfigMemberValue(prop, prop.PropertyType, instance, defaultGroup, prop.Name, prop.GetValue(instance)));
+                }
             }
 
         }
+        public Dictionary<string, Dictionary<string, object>> ToDictionary(T instance)
+        {
+            var dict = new Dictionary<string, Dictionary<string, object>>();
+            object workingInstance = instance;
+            string group = "";
+            string key = "";
+            object value = null;
+            Func<object> logic = () => { return null };
+            logic = () =>
+            {
+                object currentInstance = workingInstance;
+                foreach (var attr in Attribute.GetCustomAttributes(workingInstance.GetType()))
+                    if (attr is GroupAttribute)
+                        group = ((GroupAttribute)attr).Group;
+                foreach (var field in workingInstance.GetType().GetFields())
+                {
+                    foreach (var attr in Attribute.GetCustomAttributes(field))
+                    {
+                        workingInstance = currentInstance;
+                        if (attr is GroupAttribute)
+                        {
+                            group = ((GroupAttribute)attr).Group;
+                        }
+                        if (attr is EntryAttribute)
+                        {
+                            var entryAttr = (EntryAttribute)attr;
+                            group = entryAttr.Group ?? group;
+                            key = entryAttr.Key ?? key;
+                        }
+                        if (!dict.ContainsKey(group))
+                            dict.Add(group, new Dictionary<string, object>());
+                        if (attr is InnerAttribute)
+                        {
+                            workingInstance = field.GetValue(currentInstance) ?? Activator.CreateInstance(field.FieldType);
+                            logic();
+                        }
+                        else
+                        {
+
+                        }
+                    }
+                }
+                return null;
+            };
+
+        }
+        private class EntryInfo
+        {
+            internal Type EntryType { get; set; }
+            internal object EntryParent { get; set; }
+        }
+        private Dictionary<string, Dictionary<string, EntryInfo>> InternalTree = new Dictionary<string, Dictionary<string, EntryInfo>>();
         public Dictionary<Type, Func<string, object>> Parser = new Dictionary<Type, Func<string, object>>();
-        internal object GetConfigMemberValue(MemberInfo member, Type memberType, string defaultGroup = null, string defaultKey = null, object defaultValue = null)
+        internal object GetConfigMemberValue(MemberInfo member, Type memberType, object parent, string defaultGroup = null, string defaultKey = null, object defaultValue = null)
         {
             string group = defaultGroup;
             string key = defaultKey;
@@ -84,6 +138,13 @@ namespace FastConfig
                 value = GetDictFloat(group, key, float.Parse(defaultValue?.ToString() ?? defaultValue?.ToString() ?? ""));
             else if (Parser.ContainsKey(memberType))
                 value = Parser[memberType](GetDictString(group, key));
+            if (!InternalTree.ContainsKey(group))
+                InternalTree.Add(group, new Dictionary<string, EntryInfo>());
+            InternalTree[group][key] = new EntryInfo()
+            {
+                EntryType = memberType,
+                EntryParent = parent
+            };
             return value;
         }
 
