@@ -9,10 +9,11 @@ namespace FastConfigExample
         // Indicate that this field belongs in the "General" group
         [Group("General")]
         public bool Enable { get; set; }
-        public AuthConfig Authentication { get; set; } = new();
+        public AuthConfig Authentication { get; set; }
     }
-    // Define that this is a nested item and should be searched along with it's group
+    // Define that this is a nested item and should be searched
     [Inner]
+    // Default all fields and properties to the "Authentication" group
     [Group("Authentication")]
     public class AuthConfig
     {
@@ -20,7 +21,7 @@ namespace FastConfigExample
         public string Token { get; set; }
         public bool Remember { get; set; }
     }
-    
+
     internal class Program
     {
         static void Main(string[] args)
