@@ -26,6 +26,8 @@ namespace FastConfig.Example
             var fastConfig = new FastConfigSource<Config>(@"example.ini");
             var parsed = fastConfig.Parse();
             Debugger.Break();
+            var dict = fastConfig.ToDictionary(parsed);
+            Debugger.Break();
         }
     }
 }
