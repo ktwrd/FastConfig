@@ -50,6 +50,17 @@ namespace FastConfig
             return lines.ToArray();
         }
 
+        /// <summary>
+        /// Serialize <paramref name="instance"/> to file content then write to the specified location.
+        /// </summary>
+        /// <param name="instance">Instance to serialize</param>
+        /// <param name="location">Output location. Defaults to <see cref="Location"/> if set</param>
+        public async Task Save(T instance, string location = null)
+        {
+            var lines = ToFileLines(instance);
+            await File.WriteAllLinesAsync(location ?? Location, lines);
+        }
+
         #region Parsing
         /// <summary>
         /// Deserialize Ini file content to a class.
