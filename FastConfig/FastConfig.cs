@@ -68,14 +68,22 @@ namespace FastConfig
             foreach (var field in type.GetFields())
             {
                 if (Attribute.GetCustomAttribute(field.FieldType, typeof(InnerAttribute)) != null)
+                {
+                    if (field.FieldType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
+                        throw new Exception($"{field.FieldType.AssemblyQualifiedName} requires a constructor that has no parameters.");
                     ParseChildren(field.FieldType, field.GetValue(instance) ?? Activator.CreateInstance(field.FieldType), defaultGroup);
+                }
                 else
                     field.SetValue(instance, GetConfigMemberValue(field, field.FieldType, instance, defaultGroup, field.Name, field.GetValue(instance)));
             }
             foreach (var prop in type.GetProperties())
             {
                 if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(InnerAttribute)) != null)
+                {
+                    if (prop.PropertyType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
+                        throw new Exception($"{prop.PropertyType.AssemblyQualifiedName} requires a constructor that has no parameters.");
                     ParseChildren(prop.PropertyType, prop.GetValue(instance) ?? Activator.CreateInstance(prop.PropertyType), defaultGroup);
+                }
                 else
                 {
                     prop.SetValue(instance, GetConfigMemberValue(prop, prop.PropertyType, instance, defaultGroup, prop.Name, prop.GetValue(instance)));
@@ -158,6 +166,8 @@ namespace FastConfig
                 }
                 if (Attribute.GetCustomAttribute(field.FieldType, typeof(InnerAttribute)) != null)
                 {
+                    if (field.FieldType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
+                        throw new Exception($"{field.FieldType.AssemblyQualifiedName} requires a constructor that has no parameters.");
                     var res = ToDictionary_Logic(new Dictionary<string, Dictionary<string, object>>(), group, key, value, field.GetValue(currentInstance) ?? Activator.CreateInstance(field.FieldType));
                     dict = dict.Concat(res.AsEnumerable()).ToDictionary(v => v.Key, v => v.Value);
                 }
@@ -196,6 +206,8 @@ namespace FastConfig
                 }
                 if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(InnerAttribute)) != null)
                 {
+                    if (prop.PropertyType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
+                        throw new Exception($"{prop.PropertyType.AssemblyQualifiedName} requires a constructor that has no parameters.");
                     var res = ToDictionary_Logic(new Dictionary<string, Dictionary<string, object>>(), group, key, value, prop.GetValue(currentInstance) ?? Activator.CreateInstance(prop.PropertyType));
                     dict = dict.Concat(res.AsEnumerable()).ToDictionary(v => v.Key, v => v.Value);
                 }
