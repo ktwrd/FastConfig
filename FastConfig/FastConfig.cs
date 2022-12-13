@@ -86,7 +86,7 @@ namespace FastConfig
                     defaultGroup = ((GroupAttribute)attr).Group;
             foreach (var field in type.GetFields())
             {
-                if (Attribute.GetCustomAttribute(field.FieldType, typeof(InnerAttribute)) != null)
+                if (Attribute.GetCustomAttribute(field.FieldType, typeof(ConfigSerializeAttribute)) != null)
                 {
                     if (field.FieldType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
                         throw new Exception($"{field.FieldType.AssemblyQualifiedName} requires a constructor that has no parameters.");
@@ -97,7 +97,7 @@ namespace FastConfig
             }
             foreach (var prop in type.GetProperties())
             {
-                if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(InnerAttribute)) != null)
+                if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(ConfigSerializeAttribute)) != null)
                 {
                     if (prop.PropertyType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
                         throw new Exception($"{prop.PropertyType.AssemblyQualifiedName} requires a constructor that has no parameters.");
@@ -178,12 +178,12 @@ namespace FastConfig
                     key = field.Name ?? key;
                     if (!dict.ContainsKey(group))
                         dict.Add(group, new Dictionary<string, object>());
-                    if (Attribute.GetCustomAttribute(field.FieldType, typeof(InnerAttribute)) == null)
+                    if (Attribute.GetCustomAttribute(field.FieldType, typeof(ConfigSerializeAttribute)) == null)
                     {
                         dict[group][key] = field.GetValue(currentInstance);
                     }
                 }
-                if (Attribute.GetCustomAttribute(field.FieldType, typeof(InnerAttribute)) != null)
+                if (Attribute.GetCustomAttribute(field.FieldType, typeof(ConfigSerializeAttribute)) != null)
                 {
                     if (field.FieldType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
                         throw new Exception($"{field.FieldType.AssemblyQualifiedName} requires a constructor that has no parameters.");
@@ -195,7 +195,7 @@ namespace FastConfig
                     key = field.Name ?? key;
                     if (!dict.ContainsKey(group))
                         dict.Add(group, new Dictionary<string, object>());
-                    if (Attribute.GetCustomAttribute(field.FieldType, typeof(InnerAttribute)) == null)
+                    if (Attribute.GetCustomAttribute(field.FieldType, typeof(ConfigSerializeAttribute)) == null)
                     {
                         dict[group][key] = field.GetValue(currentInstance);
                     }
@@ -218,12 +218,12 @@ namespace FastConfig
                     key = prop.Name ?? key;
                     if (!dict.ContainsKey(group))
                         dict.Add(group, new Dictionary<string, object>());
-                    if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(InnerAttribute)) == null)
+                    if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(ConfigSerializeAttribute)) == null)
                     {
                         dict[group][key] = prop.GetValue(currentInstance);
                     }
                 }
-                if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(InnerAttribute)) != null)
+                if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(ConfigSerializeAttribute)) != null)
                 {
                     if (prop.PropertyType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
                         throw new Exception($"{prop.PropertyType.AssemblyQualifiedName} requires a constructor that has no parameters.");
@@ -235,7 +235,7 @@ namespace FastConfig
                     key = prop.Name ?? key;
                     if (!dict.ContainsKey(group))
                         dict.Add(group, new Dictionary<string, object>());
-                    if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(InnerAttribute)) == null)
+                    if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(ConfigSerializeAttribute)) == null)
                     {
                         dict[group][key] = prop.GetValue(currentInstance);
                     }

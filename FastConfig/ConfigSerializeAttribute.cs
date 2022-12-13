@@ -10,7 +10,7 @@ namespace FastConfig
     /// The class that this attribute is assigned to must have a constructor that takes no arguments.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    public class InnerAttribute : Attribute
+    public class ConfigSerializeAttribute : Attribute
     {
     }
 }

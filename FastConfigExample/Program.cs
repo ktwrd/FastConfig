@@ -13,7 +13,7 @@ namespace FastConfigExample
         public AuthConfig Authentication { get; set; }
     }
     // Define that this is a nested item and should be searched
-    [Inner]
+    [ConfigSerialize]
     // Default all fields and properties to the "Authentication" group
     [Group("Authentication")]
     public class AuthConfig
