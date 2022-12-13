@@ -26,9 +26,9 @@ namespace FastConfig.Example
             var parsed = fastConfig.Parse();
             var dict = fastConfig.ToDictionary(parsed);
 
-            PrintContent(parsed, dict);
+            PrintContent(fastConfig, parsed, dict);
         }
-        static void PrintContent(Config parsed, Dictionary<string, Dictionary<string, object>> dict)
+        static void PrintContent(FastConfigSource<Config> fastConfig, Config parsed, Dictionary<string, Dictionary<string, object>> dict)
         {
             var serializer = new JsonSerializerOptions()
             {
@@ -43,6 +43,8 @@ namespace FastConfig.Example
             Console.WriteLine(JsonSerializer.Serialize(parsed, serializer));
             Console.WriteLine($"================================ To Dictionary");
             Console.WriteLine(JsonSerializer.Serialize(dict, serializer));
+            Console.WriteLine($"================================ Output Content");
+            Console.WriteLine(string.Join("\n", fastConfig.ToFileLines(parsed)));
             Console.WriteLine("\n\n\n\n\n\n\n\n");
         }
     }
