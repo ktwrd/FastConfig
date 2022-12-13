@@ -53,51 +53,95 @@ namespace FastConfig
             }
 
         }
+        private Dictionary<string, Dictionary<string, object>> ToDictionary_Logic(Dictionary<string, Dictionary<string, object>> dict, string group, string key, object value, object workingInstance)
+        {
+            object currentInstance = workingInstance;
+            foreach (var attr in Attribute.GetCustomAttributes(workingInstance.GetType()))
+                if (attr is GroupAttribute)
+                    group = ((GroupAttribute)attr).Group;
+            foreach (var field in workingInstance.GetType().GetFields())
+            {
+                foreach (var attr in Attribute.GetCustomAttributes(field))
+                {
+                    workingInstance = currentInstance;
+                    if (attr is GroupAttribute)
+                    {
+                        group = ((GroupAttribute)attr).Group;
+                    }
+                    if (attr is EntryAttribute)
+                    {
+                        var entryAttr = (EntryAttribute)attr;
+                        group = entryAttr.Group ?? group;
+                        key = entryAttr.Key ?? field.Name;
+                    }
+                    key = field.Name ?? key;
+                    if (!dict.ContainsKey(group))
+                        dict.Add(group, new Dictionary<string, object>());
+                    if (Attribute.GetCustomAttribute(field.FieldType, typeof(InnerAttribute)) == null)
+                    {
+                        dict[group][key] = field.GetValue(currentInstance);
+                    }
+                }
+                if (Attribute.GetCustomAttribute(field.FieldType, typeof(InnerAttribute)) != null)
+                {
+                    var res = ToDictionary_Logic(new Dictionary<string, Dictionary<string, object>>(), group, key, value, field.GetValue(currentInstance) ?? Activator.CreateInstance(field.FieldType));
+                    dict = dict.Concat(res.AsEnumerable()).ToDictionary(v => v.Key, v => v.Value);
+                }
+                else
+                {
+                    key = field.Name ?? key;
+                    if (!dict.ContainsKey(group))
+                        dict.Add(group, new Dictionary<string, object>());
+                    if (Attribute.GetCustomAttribute(field.FieldType, typeof(InnerAttribute)) == null)
+                    {
+                        dict[group][key] = field.GetValue(currentInstance);
+                    }
+                }
+            }
+            foreach (var prop in workingInstance.GetType().GetProperties())
+            {
+                foreach (var attr in Attribute.GetCustomAttributes(prop))
+                {
+                    workingInstance = currentInstance;
+                    if (attr is GroupAttribute)
+                    {
+                        group = ((GroupAttribute)attr).Group;
+                    }
+                    if (attr is EntryAttribute)
+                    {
+                        var entryAttr = (EntryAttribute)attr;
+                        group = entryAttr.Group ?? group;
+                    }
+                    key = prop.Name ?? key;
+                    if (!dict.ContainsKey(group))
+                        dict.Add(group, new Dictionary<string, object>());
+                    if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(InnerAttribute)) == null)
+                    {
+                        dict[group][key] = prop.GetValue(currentInstance);
+                    }
+                }
+                if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(InnerAttribute)) != null)
+                {
+                    var res = ToDictionary_Logic(new Dictionary<string, Dictionary<string, object>>(), group, key, value, prop.GetValue(currentInstance) ?? Activator.CreateInstance(prop.PropertyType));
+                    dict = dict.Concat(res.AsEnumerable()).ToDictionary(v => v.Key, v => v.Value);
+                }
+                else
+                {
+                    key = prop.Name ?? key;
+                    if (!dict.ContainsKey(group))
+                        dict.Add(group, new Dictionary<string, object>());
+                    if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(InnerAttribute)) == null)
+                    {
+                        dict[group][key] = prop.GetValue(currentInstance);
+                    }
+                }
+            }
+            return dict;
+        }
         public Dictionary<string, Dictionary<string, object>> ToDictionary(T instance)
         {
             var dict = new Dictionary<string, Dictionary<string, object>>();
-            object workingInstance = instance;
-            string group = "";
-            string key = "";
-            object value = null;
-            Func<object> logic = () => { return null };
-            logic = () =>
-            {
-                object currentInstance = workingInstance;
-                foreach (var attr in Attribute.GetCustomAttributes(workingInstance.GetType()))
-                    if (attr is GroupAttribute)
-                        group = ((GroupAttribute)attr).Group;
-                foreach (var field in workingInstance.GetType().GetFields())
-                {
-                    foreach (var attr in Attribute.GetCustomAttributes(field))
-                    {
-                        workingInstance = currentInstance;
-                        if (attr is GroupAttribute)
-                        {
-                            group = ((GroupAttribute)attr).Group;
-                        }
-                        if (attr is EntryAttribute)
-                        {
-                            var entryAttr = (EntryAttribute)attr;
-                            group = entryAttr.Group ?? group;
-                            key = entryAttr.Key ?? key;
-                        }
-                        if (!dict.ContainsKey(group))
-                            dict.Add(group, new Dictionary<string, object>());
-                        if (attr is InnerAttribute)
-                        {
-                            workingInstance = field.GetValue(currentInstance) ?? Activator.CreateInstance(field.FieldType);
-                            logic();
-                        }
-                        else
-                        {
-
-                        }
-                    }
-                }
-                return null;
-            };
-
+            return ToDictionary_Logic(dict, "", "", null, instance);
         }
         private class EntryInfo
         {
