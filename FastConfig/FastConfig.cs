@@ -12,6 +12,8 @@ namespace FastConfig
     public class FastConfigSource<T> where T : new()
     {
         internal IniConfigSource Source;
+        public Dictionary<Type, Func<string, object>> Parser = new Dictionary<Type, Func<string, object>>();
+        private Dictionary<string, Dictionary<string, EntryInfo>> InternalTree = new Dictionary<string, Dictionary<string, EntryInfo>>();
         public FastConfigSource(string location)
             : this(Encoding.UTF8.GetBytes(File.ReadAllText(location)))
         {}
@@ -53,6 +55,50 @@ namespace FastConfig
             }
 
         }
+        internal object GetConfigMemberValue(MemberInfo member, Type memberType, object parent, string defaultGroup = null, string defaultKey = null, object defaultValue = null)
+        {
+            string group = defaultGroup;
+            string key = defaultKey;
+            object value = defaultValue;
+            foreach (var attr in Attribute.GetCustomAttributes(member))
+            {
+                if (attr is EntryAttribute)
+                {
+                    var entryAttr = (EntryAttribute)attr;
+                    group = entryAttr.Group ?? defaultGroup;
+                    key = entryAttr.Key ?? defaultKey;
+                    value = entryAttr.DefaultValue ?? defaultValue;
+                    defaultValue = entryAttr.DefaultValue ?? defaultValue;
+                }
+                if (attr is GroupAttribute)
+                {
+                    group = ((GroupAttribute)attr).Group;
+                }
+            }
+            if (memberType == typeof(string))
+                value = GetDictString(group, key, defaultValue?.ToString() ?? defaultValue?.ToString() ?? "");
+            else if (memberType == typeof(int))
+                value = GetDictInt(group, key, int.Parse(defaultValue?.ToString() ?? defaultValue?.ToString() ?? ""));
+            else if (memberType == typeof(long))
+                value = GetDictLong(group, key, long.Parse(defaultValue?.ToString() ?? defaultValue?.ToString() ?? ""));
+            else if (memberType == typeof(bool))
+                value = GetDictBoolean(group, key, (defaultValue?.ToString() ?? defaultValue?.ToString() ?? "") == "true");
+            else if (memberType == typeof(float))
+                value = GetDictFloat(group, key, float.Parse(defaultValue?.ToString() ?? defaultValue?.ToString() ?? ""));
+            else if (Parser.ContainsKey(memberType))
+                value = Parser[memberType](GetDictString(group, key));
+            if (!InternalTree.ContainsKey(group))
+                InternalTree.Add(group, new Dictionary<string, EntryInfo>());
+            InternalTree[group][key] = new EntryInfo()
+            {
+                EntryType = memberType,
+                EntryParent = parent
+            };
+            return value;
+        }
+        #endregion
+
+        #region ToDictionary
         private Dictionary<string, Dictionary<string, object>> ToDictionary_Logic(Dictionary<string, Dictionary<string, object>> dict, string group, string key, object value, object workingInstance)
         {
             object currentInstance = workingInstance;
@@ -148,51 +194,10 @@ namespace FastConfig
             internal Type EntryType { get; set; }
             internal object EntryParent { get; set; }
         }
-        private Dictionary<string, Dictionary<string, EntryInfo>> InternalTree = new Dictionary<string, Dictionary<string, EntryInfo>>();
-        public Dictionary<Type, Func<string, object>> Parser = new Dictionary<Type, Func<string, object>>();
-        internal object GetConfigMemberValue(MemberInfo member, Type memberType, object parent, string defaultGroup = null, string defaultKey = null, object defaultValue = null)
-        {
-            string group = defaultGroup;
-            string key = defaultKey;
-            object value = defaultValue;
-            foreach (var attr in Attribute.GetCustomAttributes(member))
-            {
-                if (attr is EntryAttribute)
-                {
-                    var entryAttr = (EntryAttribute)attr;
-                    group = entryAttr.Group ?? defaultGroup;
-                    key = entryAttr.Key ?? defaultKey;
-                    value = entryAttr.DefaultValue ?? defaultValue;
-                    defaultValue = entryAttr.DefaultValue ?? defaultValue;
-                }
-                if (attr is GroupAttribute)
-                {
-                    group = ((GroupAttribute)attr).Group;
-                }
-            }
-            if (memberType == typeof(string))
-                value = GetDictString(group, key, defaultValue?.ToString() ?? defaultValue?.ToString() ?? "");
-            else if (memberType == typeof(int))
-                value = GetDictInt(group, key, int.Parse(defaultValue?.ToString() ?? defaultValue?.ToString() ?? ""));
-            else if (memberType == typeof(long))
-                value = GetDictLong(group, key, long.Parse(defaultValue?.ToString() ?? defaultValue?.ToString() ?? ""));
-            else if (memberType == typeof(bool))
-                value = GetDictBoolean(group, key, (defaultValue?.ToString() ?? defaultValue?.ToString() ?? "") == "true");
-            else if (memberType == typeof(float))
-                value = GetDictFloat(group, key, float.Parse(defaultValue?.ToString() ?? defaultValue?.ToString() ?? ""));
-            else if (Parser.ContainsKey(memberType))
-                value = Parser[memberType](GetDictString(group, key));
-            if (!InternalTree.ContainsKey(group))
-                InternalTree.Add(group, new Dictionary<string, EntryInfo>());
-            InternalTree[group][key] = new EntryInfo()
-            {
-                EntryType = memberType,
-                EntryParent = parent
-            };
-            return value;
-        }
+        #endregion
 
-        public Dictionary<string, Dictionary<string, string>> GetDict()
+        #region IniConfigSource-related
+        internal Dictionary<string, Dictionary<string, string>> GetDict()
         {
             var dict = new Dictionary<string, Dictionary<string, string>>();
             foreach (IConfig cfg in Source.Configs)
@@ -220,22 +225,23 @@ namespace FastConfig
             cfg.Set(key, value);
         }
 
-        public string GetDict(string group, string key) => GetDict(group).Get(key);
-        public string GetDict(string group, string key, string fallback) => GetDict(group).Get(key, fallback);
-        public string GetDictExpanded(string group, string key) => GetDict(group).GetExpanded(key);
-        public string GetDictString(string group, string key) => GetDict(group).GetString(key);
-        public string GetDictString(string group, string key, string fallback) => GetDict(group).GetString(key, fallback);
-        public int GetDictInt(string group, string key) => GetDict(group).GetInt(key);
-        public int GetDictInt(string group, string key, int fallback) => GetDict(group).GetInt(key, fallback);
-        public int GetDictInt(string group, string key, int fallback, bool fromAlias) => GetDict(group).GetInt(key, fallback, fromAlias);
-        public long GetDictLong(string group, string key) => GetDict(group).GetLong(key);
-        public long GetDictLong(string group, string key, long fallback) => GetDict(group).GetLong(key, fallback);
-        public bool GetDictBoolean(string group, string key) => GetDict(group).GetBoolean(key);
-        public bool GetDictBoolean(string group, string key, bool fallback) => GetDict(group).GetBoolean(key, fallback);
-        public float GetDictFloat(string group, string key) => GetDict(group).GetFloat(key);
-        public float GetDictFloat(string group, string key, float fallback) => GetDict(group).GetFloat(key, fallback);
-        public string[] GetDictKeys(string group) => GetDict(group).GetKeys();
-        public string[] GetDictValues(string group) => GetDict(group).GetValues();
-        public void DictRemove(string group, string key) => GetDict(group).Remove(key);
+        internal string GetDict(string group, string key) => GetDict(group).Get(key);
+        internal string GetDict(string group, string key, string fallback) => GetDict(group).Get(key, fallback);
+        internal string GetDictExpanded(string group, string key) => GetDict(group).GetExpanded(key);
+        internal string GetDictString(string group, string key) => GetDict(group).GetString(key);
+        internal string GetDictString(string group, string key, string fallback) => GetDict(group).GetString(key, fallback);
+        internal int GetDictInt(string group, string key) => GetDict(group).GetInt(key);
+        internal int GetDictInt(string group, string key, int fallback) => GetDict(group).GetInt(key, fallback);
+        internal int GetDictInt(string group, string key, int fallback, bool fromAlias) => GetDict(group).GetInt(key, fallback, fromAlias);
+        internal long GetDictLong(string group, string key) => GetDict(group).GetLong(key);
+        internal long GetDictLong(string group, string key, long fallback) => GetDict(group).GetLong(key, fallback);
+        internal bool GetDictBoolean(string group, string key) => GetDict(group).GetBoolean(key);
+        internal bool GetDictBoolean(string group, string key, bool fallback) => GetDict(group).GetBoolean(key, fallback);
+        internal float GetDictFloat(string group, string key) => GetDict(group).GetFloat(key);
+        internal float GetDictFloat(string group, string key, float fallback) => GetDict(group).GetFloat(key, fallback);
+        internal string[] GetDictKeys(string group) => GetDict(group).GetKeys();
+        internal string[] GetDictValues(string group) => GetDict(group).GetValues();
+        internal void DictRemove(string group, string key) => GetDict(group).Remove(key);
+        #endregion
     }
 }
