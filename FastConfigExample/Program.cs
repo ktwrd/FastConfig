@@ -1,8 +1,6 @@
-﻿using System.Diagnostics;
-using System.Reflection;
-using System.Text.Json;
+﻿using FastConfig;
 
-namespace FastConfig.Example
+namespace FastConfigExample
 {
     public class Config
     {
@@ -30,7 +28,7 @@ namespace FastConfig.Example
         }
         static void PrintContent(FastConfigSource<Config> fastConfig, Config parsed, Dictionary<string, Dictionary<string, object>> dict)
         {
-            var serializer = new JsonSerializerOptions()
+            var serializer = new System.Text.Json.JsonSerializerOptions()
             {
                 IgnoreReadOnlyFields = true,
                 IgnoreReadOnlyProperties = true,
@@ -40,9 +38,9 @@ namespace FastConfig.Example
             Console.WriteLine($"================================ Text Input");
             Console.WriteLine(File.ReadAllText("example.ini"));
             Console.WriteLine($"================================ Parsed");
-            Console.WriteLine(JsonSerializer.Serialize(parsed, serializer));
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(parsed, serializer));
             Console.WriteLine($"================================ To Dictionary");
-            Console.WriteLine(JsonSerializer.Serialize(dict, serializer));
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dict, serializer));
             Console.WriteLine($"================================ Output Content");
             Console.WriteLine(string.Join("\n", fastConfig.ToFileLines(parsed)));
             Console.WriteLine("\n\n\n\n\n\n\n\n");
