@@ -86,6 +86,8 @@ namespace FastConfig
                     defaultGroup = ((GroupAttribute)attr).Group;
             foreach (var field in type.GetFields())
             {
+                if (Attribute.GetCustomAttribute(field.FieldType, typeof(FastIgnoreAttribute)) != null)
+                    continue;
                 if (Attribute.GetCustomAttribute(field.FieldType, typeof(ConfigSerializeAttribute)) != null)
                 {
                     if (field.FieldType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
@@ -97,6 +99,8 @@ namespace FastConfig
             }
             foreach (var prop in type.GetProperties())
             {
+                if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(FastIgnoreAttribute)) != null)
+                    continue;
                 if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(ConfigSerializeAttribute)) != null)
                 {
                     if (prop.PropertyType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
@@ -162,6 +166,8 @@ namespace FastConfig
                     group = ((GroupAttribute)attr).Group;
             foreach (var field in workingInstance.GetType().GetFields())
             {
+                if (Attribute.GetCustomAttribute(field.FieldType, typeof(FastIgnoreAttribute)) != null)
+                    continue;
                 foreach (var attr in Attribute.GetCustomAttributes(field))
                 {
                     workingInstance = currentInstance;
@@ -203,6 +209,8 @@ namespace FastConfig
             }
             foreach (var prop in workingInstance.GetType().GetProperties())
             {
+                if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(FastIgnoreAttribute)) != null)
+                    continue;
                 foreach (var attr in Attribute.GetCustomAttributes(prop))
                 {
                     workingInstance = currentInstance;
