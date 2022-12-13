@@ -12,13 +12,16 @@ namespace FastConfig
     public class FastConfigSource<T> where T : new()
     {
         internal IniConfigSource Source;
+        public string Location { get; private set; }
         public Dictionary<Type, Func<string, object>> Parser = new Dictionary<Type, Func<string, object>>();
         private Dictionary<string, Dictionary<string, EntryInfo>> InternalTree = new Dictionary<string, Dictionary<string, EntryInfo>>();
         
         /// <param name="location">Location to load the Ini file from</param>
         public FastConfigSource(string location)
             : this(Encoding.UTF8.GetBytes(File.ReadAllText(location)))
-        {}
+        {
+            Location = location;
+        }
         /// <param name="byteArray">Load with byte array. Creates a memory stream</param>
         public FastConfigSource(byte[] byteArray)
             : this(new MemoryStream(byteArray))
