@@ -25,6 +25,25 @@ namespace FastConfig
             Source = new IniConfigSource(content);
             var gotten = GetDict();
         }
+
+        /// <summary>
+        /// Create file content from class instance
+        /// </summary>
+        /// <param name="instance">Instance of <see cref="T"/></param>
+        public string[] ToFileLines(T instance)
+        {
+            var lines = new List<string>();
+            var dict = ToDictionary(instance);
+            foreach (var parent in dict)
+            {
+                lines.Add($"[{parent.Key}]");
+                foreach (var child in parent.Value)
+                    lines.Add($"{child.Key} = {child.Value}");
+            }
+            return lines.ToArray();
+        }
+
+        #region Parsing
         public T Parse()
         {
             T instance = new();
