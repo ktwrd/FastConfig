@@ -41,6 +41,9 @@ namespace FastConfigExample
             // Create Ini file content from the deserialized
             // class, or any class that is the same type.
             string[] fileLines = fastConfig.ToFileLines(parsed);
+
+            // Save config to desierd location
+            fastConfig.Save(parsed, $"example-{DateTimeOffset.Now.ToUnixSeconds()}.ini").Wait();
         }
     }
 }
