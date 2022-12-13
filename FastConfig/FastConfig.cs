@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -58,10 +59,14 @@ namespace FastConfig
         public async Task Save(T instance, string location = null)
         {
             var lines = ToFileLines(instance);
+#if NETSTANDARD2_1_OR_GREATER
             await File.WriteAllLinesAsync(location ?? Location, lines);
+#else
+            File.WriteAllLines(location ?? Location, lines);
+#endif
         }
 
-        #region Parsing
+#region Parsing
         /// <summary>
         /// Deserialize Ini file content to a class.
         /// </summary>
@@ -69,7 +74,7 @@ namespace FastConfig
         /// <returns>Deserialized class</returns>
         public T Parse(string defaultGroup = null)
         {
-            T instance = new();
+            T instance = new T();
             var type = typeof(T);
             ParseChildren(type, instance, defaultGroup);
             return instance;
@@ -146,9 +151,9 @@ namespace FastConfig
             };
             return value;
         }
-        #endregion
+#endregion
 
-        #region ToDictionary
+#region ToDictionary
         private Dictionary<string, Dictionary<string, object>> ToDictionary_Logic(Dictionary<string, Dictionary<string, object>> dict, string group, string key, object value, object workingInstance)
         {
             object currentInstance = workingInstance;
@@ -248,9 +253,9 @@ namespace FastConfig
             internal Type EntryType { get; set; }
             internal object EntryParent { get; set; }
         }
-        #endregion
+#endregion
 
-        #region IniConfigSource-related
+#region IniConfigSource-related
         internal Dictionary<string, Dictionary<string, string>> GetDict()
         {
             var dict = new Dictionary<string, Dictionary<string, string>>();
@@ -296,6 +301,6 @@ namespace FastConfig
         internal string[] GetDictKeys(string group) => GetDict(group).GetKeys();
         internal string[] GetDictValues(string group) => GetDict(group).GetValues();
         internal void DictRemove(string group, string key) => GetDict(group).Remove(key);
-        #endregion
+#endregion
     }
 }
