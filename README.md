@@ -1,4 +1,5 @@
 ## Usage
+See [FastConfigExample/Program.cs](FastConfigExample/Program.cs) for a full example
 ```csharp
 using FastConfig;
 
