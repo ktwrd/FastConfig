@@ -14,16 +14,20 @@ namespace FastConfig
         internal IniConfigSource Source;
         public Dictionary<Type, Func<string, object>> Parser = new Dictionary<Type, Func<string, object>>();
         private Dictionary<string, Dictionary<string, EntryInfo>> InternalTree = new Dictionary<string, Dictionary<string, EntryInfo>>();
+        
+        /// <param name="location">Location to load the Ini file from</param>
         public FastConfigSource(string location)
             : this(Encoding.UTF8.GetBytes(File.ReadAllText(location)))
         {}
+        /// <param name="byteArray">Load with byte array. Creates a memory stream</param>
         public FastConfigSource(byte[] byteArray)
             : this(new MemoryStream(byteArray))
         {}
+        /// <param name="content">Load with a stream</param>
         public FastConfigSource(Stream content)
         {
             Source = new IniConfigSource(content);
-            var gotten = GetDict();
+            GetDict();
         }
 
         /// <summary>
@@ -44,11 +48,16 @@ namespace FastConfig
         }
 
         #region Parsing
-        public T Parse()
+        /// <summary>
+        /// Deserialize Ini file content to a class.
+        /// </summary>
+        /// <param name="defaultGroup">Used there is no inherited <see cref="GroupAttribute"/></param>
+        /// <returns>Deserialized class</returns>
+        public T Parse(string defaultGroup = null)
         {
             T instance = new();
             var type = typeof(T);
-            ParseChildren(type, instance, null);
+            ParseChildren(type, instance, defaultGroup);
             return instance;
         }
         internal void ParseChildren(Type type, object instance, string defaultGroup)
