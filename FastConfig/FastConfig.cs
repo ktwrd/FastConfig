@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FastConfig
+namespace kate.FastConfig
 {
     public class FastConfigSource<T> where T : new()
     {
@@ -90,9 +90,11 @@ namespace FastConfig
                     continue;
                 if (Attribute.GetCustomAttribute(field.FieldType, typeof(ConfigSerializeAttribute)) != null)
                 {
-                    if (field.FieldType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
+                    if (!field.FieldType.GetConstructors().Where(v => v.GetParameters().Length < 1).Any())
                         throw new Exception($"{field.FieldType.AssemblyQualifiedName} requires a constructor that has no parameters.");
-                    ParseChildren(field.FieldType, field.GetValue(instance) ?? Activator.CreateInstance(field.FieldType), defaultGroup);
+                    if (field.GetValue(instance) == null)
+                        field.SetValue(instance, Activator.CreateInstance(field.FieldType));
+                    ParseChildren(field.FieldType, field.GetValue(instance), defaultGroup);
                 }
                 else
                     field.SetValue(instance, GetConfigMemberValue(field, field.FieldType, instance, defaultGroup, field.Name, field.GetValue(instance)));
@@ -103,9 +105,11 @@ namespace FastConfig
                     continue;
                 if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(ConfigSerializeAttribute)) != null)
                 {
-                    if (prop.PropertyType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
+                    if (!prop.PropertyType.GetConstructors().Where(v => v.GetParameters().Length < 1).Any())
                         throw new Exception($"{prop.PropertyType.AssemblyQualifiedName} requires a constructor that has no parameters.");
-                    ParseChildren(prop.PropertyType, prop.GetValue(instance) ?? Activator.CreateInstance(prop.PropertyType), defaultGroup);
+                    if (prop.GetValue(instance) == null)
+                        prop.SetValue(instance, Activator.CreateInstance(prop.PropertyType));
+                    ParseChildren(prop.PropertyType, prop.GetValue(instance), defaultGroup);
                 }
                 else
                 {
@@ -123,7 +127,7 @@ namespace FastConfig
             {
                 if (attr is EntryAttribute)
                 {
-                    var entryAttr = (EntryAttribute)attr;
+                    EntryAttribute entryAttr = (EntryAttribute)attr;
                     group = entryAttr.Group ?? defaultGroup;
                     key = entryAttr.Key ?? defaultKey;
                     value = entryAttr.DefaultValue ?? defaultValue;
@@ -189,10 +193,14 @@ namespace FastConfig
                         dict[group][key] = field.GetValue(currentInstance);
                     }
                 }
+
+                // Check if field has the ConfigSerializeableAttribute
                 if (Attribute.GetCustomAttribute(field.FieldType, typeof(ConfigSerializeAttribute)) != null)
                 {
                     if (field.FieldType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
                         throw new Exception($"{field.FieldType.AssemblyQualifiedName} requires a constructor that has no parameters.");
+                    if (field.GetValue(currentInstance) == null)
+                        field.SetValue(currentInstance, Activator.CreateInstance(field.FieldType));
                     var res = ToDictionary_Logic(new Dictionary<string, Dictionary<string, object>>(), group, key, value, field.GetValue(currentInstance) ?? Activator.CreateInstance(field.FieldType));
                     dict = dict.Concat(res.AsEnumerable()).ToDictionary(v => v.Key, v => v.Value);
                 }
@@ -231,10 +239,14 @@ namespace FastConfig
                         dict[group][key] = prop.GetValue(currentInstance);
                     }
                 }
+
+                // Check if property has the ConfigSerializeableAttribute
                 if (Attribute.GetCustomAttribute(prop.PropertyType, typeof(ConfigSerializeAttribute)) != null)
                 {
                     if (prop.PropertyType.GetConstructors().Where(v => v.GetParameters().Length < 1).Count() < 1)
                         throw new Exception($"{prop.PropertyType.AssemblyQualifiedName} requires a constructor that has no parameters.");
+                    if (prop.GetValue(currentInstance) == null)
+                        prop.SetValue(currentInstance, Activator.CreateInstance(prop.PropertyType));
                     var res = ToDictionary_Logic(new Dictionary<string, Dictionary<string, object>>(), group, key, value, prop.GetValue(currentInstance) ?? Activator.CreateInstance(prop.PropertyType));
                     dict = dict.Concat(res.AsEnumerable()).ToDictionary(v => v.Key, v => v.Value);
                 }
@@ -281,9 +293,7 @@ namespace FastConfig
         }
         internal IConfig GetDict(string group)
         {
-            var cfg = Source.Configs[group];
-            if (cfg == null)
-                cfg = Source.Configs.Add(group);
+            IConfig cfg = Source.Configs[group] ?? Source.Configs.Add(group);
             return cfg;
         }
         internal void SetDict(string group, string key, object value)

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FastConfig
+namespace kate.FastConfig
 {
     /// <summary>
     /// The class that this attribute is assigned to must have a constructor that takes no arguments.

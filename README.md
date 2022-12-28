@@ -3,7 +3,7 @@ See [FastConfigExample/Program.cs](FastConfigExample/Program.cs) for a full exam
 ```csharp
 using FastConfig;
 
-namespace FastConfigExample
+namespace kate.FastConfigExample
 {
     public class Config
     {

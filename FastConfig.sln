@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33110.190
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FastConfig", "FastConfig\FastConfig.csproj", "{90609D16-823F-48AA-BFF2-868CCD759B67}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "kate.FastConfig", "FastConfig\kate.FastConfig.csproj", "{90609D16-823F-48AA-BFF2-868CCD759B67}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FastConfigExample", "FastConfigExample\FastConfigExample.csproj", "{9A5D0A2D-EA3F-409A-9022-A707DD7EE812}"
 EndProject

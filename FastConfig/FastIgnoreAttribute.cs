@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FastConfig
+namespace kate.FastConfig
 {
     /// <summary>
     /// Ignore serialization/deserialization of fields/properties
